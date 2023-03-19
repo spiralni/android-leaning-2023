@@ -5,17 +5,20 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Card
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Scaffold
-import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -64,7 +67,9 @@ fun WoofTopAppBar(modifier: Modifier = Modifier) {
         Image(
             painter = painterResource(id = R.drawable.ic_woof_logo),
             contentDescription = null,
-            modifier = modifier.padding(8.dp).size(64.dp)
+            modifier = modifier
+                .padding(8.dp)
+                .size(64.dp)
         )
         Text(
             text = stringResource(id = R.string.app_name),
@@ -114,6 +119,17 @@ fun DogIcon(@DrawableRes dogIcon: Int, modifier: Modifier = Modifier) {
     )
 }
 
+@Composable
+fun DogItemButton(expanded: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    IconButton(onClick = onClick) {
+        Icon(
+            imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+            tint = MaterialTheme.colors.secondary,
+            contentDescription = stringResource(id = R.string.expand_button_content_description)
+        )
+    }
+}
+
 /**
  * Composable that displays a list item containing a dog icon and their information.
  *
@@ -122,15 +138,55 @@ fun DogIcon(@DrawableRes dogIcon: Int, modifier: Modifier = Modifier) {
  */
 @Composable
 fun DogItem(dog: Dog, modifier: Modifier = Modifier) {
+    var isExpanded by remember { mutableStateOf(false) }
+
     Card(modifier = modifier.padding(8.dp), elevation = 4.dp)  {
-        Row(
-            modifier = modifier
-                .fillMaxWidth()
-                .padding(8.dp)
+        Column(
+            modifier = modifier.animateContentSize(
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessLow
+                )
+            )
         ) {
-            DogIcon(dogIcon = dog.imageResourceId)
-            DogInformation(dogName = dog.name, dogAge = dog.age)
+            Row(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .padding(8.dp)
+            ) {
+                DogIcon(dogIcon = dog.imageResourceId)
+                DogInformation(dogName = dog.name, dogAge = dog.age)
+                Spacer(Modifier.weight(1f))
+                DogItemButton(
+                    expanded = isExpanded,
+                    onClick = { isExpanded = !isExpanded }
+                )
+            }
+            if (isExpanded) {
+                DogHobby(hobby = dog.hobbies)
+            }
         }
+    }
+}
+
+@Composable
+fun DogHobby(@StringRes hobby: Int, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.padding(
+            top = 8.dp,
+            end = 16.dp,
+            bottom = 16.dp,
+            start = 16.dp
+        )
+    ) {
+        Text(
+            text = stringResource(id = R.string.about),
+            style = MaterialTheme.typography.h3
+        )
+        Text(
+            text = stringResource(id = hobby),
+            style = MaterialTheme.typography.body1
+        )
     }
 }
 
